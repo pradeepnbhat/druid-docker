@@ -9,13 +9,17 @@ fi
 
 DB_CONNECT_URI="jdbc:${DB_TYPE}\:\/\/${DB_HOST}\:${DB_PORT}\/${DB_DBNAME}"
 
+mkdir /opt/druid/conf/druid/_extension
+echo 'druid.extensions.directory=/opt/druid/extensions' > /opt/druid/conf/druid/_extension/common.runtime.properties
+
 sed -ri 's#druid.zk.service.host.*#druid.zk.service.host='${ZOOKEEPER_HOST}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
 sed -ri 's#druid.metadata.storage.type.*#druid.metadata.storage.type='${DB_TYPE}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
 sed -ri 's#druid.metadata.storage.connector.connectURI.*#druid.metadata.storage.connector.connectURI='${DB_CONNECT_URI}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
 sed -ri 's#druid.metadata.storage.connector.user.*#druid.metadata.storage.connector.user='${DB_USERNAME}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
 sed -ri 's#druid.metadata.storage.connector.password.*#druid.metadata.storage.connector.password='${DB_PASSWORD}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
-# sed -ri 's#druid.s3.accessKey.*#druid.s3.accessKey='${S3_ACCESS_KEY}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
-# sed -ri 's#druid.s3.secretKey.*#druid.s3.secretKey='${S3_SECRET_KEY}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
+sed -ri 's#druid.azure.account.*#druid.azure.account='${AZURE_ACCOUNT}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
+sed -ri 's#druid.azure.key.*#druid.azure.key='${AZURE_KEY}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
+sed -ri 's#druid.azure.container.*#druid.azure.container='${AZURE_CONTAINER}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
 # sed -ri 's#druid.storage.bucket.*#druid.storage.bucket='${S3_STORAGE_BUCKET}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
 # sed -ri 's#druid.indexer.logs.s3Bucket.*#druid.indexer.logs.s3Bucket='${S3_INDEXING_BUCKET}'#g' /opt/druid/conf/druid/_common/common.runtime.properties
 
@@ -41,4 +45,5 @@ fi
 #     sed -ri 's/druid.storage.storageDirectory=.*/druid.storage.storageDirectory='${DRUID_DEEPSTORAGE_LOCAL_DIR}'/g' /opt/druid/conf/druid/_common/common.runtime.properties
 # fi
 
-java ${JAVA_OPTS} -cp /opt/druid/conf/druid/_common:/opt/druid/conf/druid/$1:/opt/druid/lib/* io.druid.cli.Main server $@
+java -cp /opt/druid/conf/druid/_extension:/opt/druid/lib/* org.apache.druid.cli.Main tools pull-deps -r "https://repo1.maven.org/maven2/" -c org.apache.druid.extensions.contrib:druid-azure-extensions:0.15.1-incubating --no-default-hadoop
+java ${JAVA_OPTS} -cp /opt/druid/conf/druid/_common:/opt/druid/conf/druid/$1:/opt/druid/lib/*:/opt/druid/extensions/druid-azure-extensions/* org.apache.druid.cli.Main server $@
